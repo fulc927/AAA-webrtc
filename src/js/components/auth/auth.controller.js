@@ -4,19 +4,7 @@
 
   angular
     .module('tokenAuthApp.components.auth', [])
-    .controller('authLoginController', authLoginController)
-    .controller('authRegisterController', authRegisterController)
-    .controller('authStatusController', authStatusController)
-    .controller('authLogoutController', authLogoutController);
-
-  authLoginController.$inject = ['$location', 'authService'];
-  authRegisterController.$inject = ['$location', 'authService'];
-  authStatusController.$inject = ['authService'];
-  authLoginController.$inject = ['$location', 'authService'];
-  //ng-submit="authLoginCtrl.onLogin()"
-  //ng-model="authLoginCtrl.user.username DANS AUTH.LOGIN.HTML
-  function authLoginController($location, authService) {
-    /*jshint validthis: true */
+    .controller('authLoginController',['$scope','$location', 'authService', function($scope, $location, authservice){
     const vm = this;
     console.log(this);
     //vm.user = {};
@@ -33,33 +21,11 @@
         console.log(err);
       });
     };
-  }
+    }]);
 
-  function authRegisterController($location, authService) {
-    /*jshint validthis: true */
-    const vm = this;
-    vm.user = {};
-    vm.onRegister = function() {
-      authService.register(vm.user)
-      .then((user) => {
-        localStorage.setItem('token', user.data.token);
-        $location.path('/status');
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-    };
-  }
-
-  function authLogoutController($location, authService) {
-    //const vm = this;
-    //vm.onLogout = function() {
-    //  localStorage.removeItem('token');
-    //  $location.path('/logout');
-    //};
-  }
-  function authStatusController(authService, $location) {
-    /*jshint validthis: true */
+  angular
+    .module('tokenAuthApp.components.auth', [])
+    .controller('authStatusController',['$scope','$location','authService',function($scope,$location, authService){
     const vm = this;
     vm.isLoggedIn = false;
     const token = localStorage.getItem('token');
@@ -74,9 +40,9 @@
       });
     }
     vm.onLogoff = function() {
-        authService.logoff(vm.user)
+        authService.logoff(vm.user);
         $location.path('/ogo');
-      }
-  }
+      };
+   }]);
 
 })();
