@@ -1,7 +1,6 @@
 (function() {
 
   'use strict';
-
   angular
     .module('tokenAuthApp', [
       'ngRoute',
@@ -10,5 +9,5 @@
       'tokenAuthApp.components.auth',
       'tokenAuthApp.services'
     ]);
-
 })();
+

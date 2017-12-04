@@ -1,14 +1,11 @@
 (function() {
 
-  'use strict';
+    'use strict';
+    var tokenAuthApp = angular.module('tokenAuthApp.components.auth',[]);
 
-  angular
-    .module('tokenAuthApp.components.auth', [])
-    .controller('authLoginController',['$scope','$location', 'authService', function($scope, $location, authservice){
+    tokenAuthApp.controller('authLoginController',['$scope','$location', 'authService', function authLoginController($scope, $location, authService){
     const vm = this;
-    console.log(this);
-    //vm.user = {};
-    console.log(vm);
+    vm.user = {};
     vm.onLogin = function() {
       authService.login(vm.user)
       .then((digit) => {
@@ -23,9 +20,7 @@
     };
     }]);
 
-  angular
-    .module('tokenAuthApp.components.auth', [])
-    .controller('authStatusController',['$scope','$location','authService',function($scope,$location, authService){
+    tokenAuthApp.controller('authStatusController',['$scope','$location','authService',function($scope, $location, authService){
     const vm = this;
     vm.isLoggedIn = false;
     const token = localStorage.getItem('token');
@@ -41,8 +36,8 @@
     }
     vm.onLogoff = function() {
         authService.logoff(vm.user);
-        $location.path('/ogo');
+        $location.path('/login');
       };
    }]);
-
 })();
+

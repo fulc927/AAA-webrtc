@@ -11,5 +11,5 @@
   function mainController($scope) {
     $scope.test = 'sanity check';
   }
-
 })();
+

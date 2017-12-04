@@ -1,14 +1,9 @@
 (function() {
 
   'use strict';
+  var tokenAuthApp = angular.module('tokenAuthApp.services', []);
 
-  angular
-    .module('tokenAuthApp.services', [])
-    .service('authService', authService);
-
-  authService.$inject = ['$http'];
-
-  function authService($http) {
+  tokenAuthApp.service('authService',['$http',function authService($http) {
     /*jshint validthis: true */
     const baseURL = 'http://192.168.69.1:8000/v2/';
     this.login = function(user) {
@@ -179,14 +174,14 @@
         headers: {'Content-Type': 'application/json'}
       });
     };
-    this.register = function(user) {
-      return $http({
-        method: 'POST',
-        url: baseURL + 'register',
-        data: user,
-        headers: {'Content-Type': 'application/json'}
-      });
-    };
+    //this.register = function(user) {
+    //  return $http({
+    //    method: 'POST',
+    //    url: baseURL + 'register',
+    //    data: user,
+    //    headers: {'Content-Type': 'application/json'}
+    //  });
+    //}
     this.ensureAuthenticated = function(token) {
       return $http({
         method: 'GET',
@@ -200,6 +195,5 @@
     this.logoff = function() {
       localStorage.removeItem('token');
     };
-  }
-
+    }]);
 })();

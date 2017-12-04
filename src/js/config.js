@@ -1,7 +1,6 @@
 (function() {
 
   'use strict';
-
   angular
     .module('tokenAuthApp.config', [])
     .config(appConfig)
@@ -71,5 +70,5 @@
       }
     });
   }
-
 })();
+
