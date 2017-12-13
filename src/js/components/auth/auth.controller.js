@@ -10,7 +10,7 @@
       authService.login(vm.user)
       .then((digit) => {
         localStorage.setItem('token', digit.data.auth_token);
-        console.log(vm.user);
+        //console.log(vm.user);
         //localStorage.setItem('token', digit.data.auth_token);
         $location.path('/status');
       })
@@ -20,7 +20,7 @@
     };
     }]);
 
-    tokenAuthApp.controller('authStatusController',['$scope','$location','authService',function($scope, $location, authService){
+    tokenAuthApp.controller('authStatusController',['$scope','$location','authService','startVoicemail',function($scope, $location, authService, startVoicemail){
     const vm = this;
     vm.isLoggedIn = false;
     const token = localStorage.getItem('token');
@@ -37,7 +37,13 @@
     vm.onLogoff = function() {
         authService.logoff(vm.user);
         $location.path('/login');
-      };
+    };
+    vm.onStart = function() {
+        startVoicemail.sebvoicemail();
+    };
+       vm.onEvent = function() {
+        
+    };
    }]);
 })();
 
