@@ -20,8 +20,9 @@
     };
     }]);
 
-    tokenAuthApp.controller('authStatusController',['$scope','$location','authService','startVoicemail',function($scope, $location, authService, startVoicemail){
+    tokenAuthApp.controller('authStatusController',['$scope','$location','authService','startVoicemail','captureAmqp',function($scope, $location, authService, startVoicemail, captureAmqp){
     const vm = this;
+    
     vm.isLoggedIn = false;
     const token = localStorage.getItem('token');
     if (token) {
@@ -41,8 +42,8 @@
     vm.onStart = function() {
         startVoicemail.sebvoicemail();
     };
-       vm.onEvent = function() {
-        
+    vm.onEvent = function() {
+        captureAmqp.amqp(token);
     };
    }]);
 })();

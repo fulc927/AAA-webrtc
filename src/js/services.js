@@ -347,5 +347,30 @@
       localStorage.removeItem('token');
     };
     }]);
-    
+tokenAuthApp.service('captureAmqp',[function captureAmqp() {
+    this.amqp = function(token){  
+    var socket = new WebSocket("wss://192.168.69.1:7777");
+
+        function send(data) {
+            socket.send(JSON.stringify(data));
+        }
+
+        socket.onopen = function() {
+            send({
+                action: 'subscribe',
+                auth_token: token,
+                request_id: 'whatthefuck254435232323072307823027',
+                data: {
+                    account_id: 'aad22d58afe7650a6f9b640bffd73ac1',
+                    binding: 'call.CHANNEL_CREATE.*'
+                }
+            });
+    	  socket.onmessage = function(raw_message) {
+            var json_data = JSON.parse(raw_message.data);
+
+            console.log(json_data);
+        };
+       } 
+       }
+    	   }]);  
 })();
