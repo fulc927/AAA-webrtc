@@ -362,7 +362,11 @@ tokenAuthApp.service('captureAmqp',[function captureAmqp() {
                 request_id: 'whatthefuck254435232323072307823027',
                 data: {
                     account_id: 'aad22d58afe7650a6f9b640bffd73ac1',
-                    binding: 'call.CHANNEL_CREATE.*'
+		    //working
+                    //binding: 'call.CHANNEL_CREATE.*'
+                    //binding: 'doc_created.*.user.*'
+                    binding: 'from-janus'
+                    //binding: 'authz.*'
                 }
             });
     	  socket.onmessage = function(raw_message) {
