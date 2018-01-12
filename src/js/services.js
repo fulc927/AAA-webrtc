@@ -3,10 +3,19 @@
   'use strict';
   var tokenAuthApp = angular.module('tokenAuthApp.services', []);
     
-  tokenAuthApp.service('startVoicemail',[function startVoicemail() {
-    this.sebvoicemail = function(){  	
+  tokenAuthApp.service('startVoicemail',['$http',function startVoicemail($http) {
+    this.sebvoicemail = function(server2){  	
      var server = null;
      server = "https://" + "192.168.69.1" + ":8089/janus";
+     
+						//const digit = {data: {credentials: hash,realm:'opentelecom.fr'}};
+      				//return $http({
+        				//method: 'POST',
+        				//url: server 
+        				//data: digit,
+        				//headers: {'apisecret': 'janusrocks'}
+      				//});
+      
      var janus = null;
      var vmailtest = null;
      var opaqueId = "voicemailtest-"+Janus.randomString(12);
@@ -15,10 +24,12 @@
      var myusername = null;
      var myid = null;
      var audioenabled = false;
+     var apisecret = 'janussucks'
    	
 			// Create session
 			janus = new Janus(
 				{
+						
 					server: server,
 					success: function() {
 						// Attach to Voice Mail test plugin
@@ -336,12 +347,38 @@
     this.ensureAuthenticated = function(token) {
       return $http({
         method: 'GET',
-        url: baseURL + 'accounts/aad22d58afe7650a6f9b640bffd73ac1/registrations',
+        url: baseURL + 'accounts/e9eff1cac2c2a186af6fd4de74aaccb6/registrations',
         headers: {
           'Content-Type': 'application/json',
           'X-Auth-Token': token
         }
       });
+    };
+    this.choppeJanusToken = function(token) {
+      return $http({
+        method: 'GET',
+        url: baseURL + 'accounts/e9eff1cac2c2a186af6fd4de74aaccb6/account',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Auth-Token': token
+        }
+      });
+    };
+    this.tokenJanus = function(user) {
+      return $http({
+        method: 'POST',
+        url: server,
+        data: {},
+        headers: {
+          'Content-Type': 'application/json',
+          'janus': 'create',
+          'transaction': 'ciea87euea978',
+          'apisecret': 'janusrocks'
+        }
+      });
+        //console.log($http);
+        //console.log(user);
+        ////console.log(server);
     };
     this.logoff = function() {
       localStorage.removeItem('token');

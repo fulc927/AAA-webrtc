@@ -265,6 +265,9 @@ function Janus(gatewayCallbacks) {
 	var apisecret = null;
 	if(gatewayCallbacks.apisecret !== undefined && gatewayCallbacks.apisecret !== null)
 		apisecret = gatewayCallbacks.apisecret;
+		//seb
+		////console.log(token);
+		console.log(apisecret);
 	// Whether we should destroy this session when onbeforeunload is called
 	this.destroyOnUnload = true;
 	if(gatewayCallbacks.destroyOnUnload !== undefined && gatewayCallbacks.destroyOnUnload !== null)
@@ -293,7 +296,10 @@ function Janus(gatewayCallbacks) {
 			Janus.warn("Is the gateway down? (connected=false)");
 			return;
 		}
-		var longpoll = server + "/" + sessionId + "?rid=" + new Date().getTime();
+		//seb
+		//var longpoll = server + "/" + sessionId + "?rid=" + new Date().getTime();
+		//var longpoll = server + "/"  + sessionId + "?rid=" + new Date().getTime() + "&apisecret=" + "janusrocks";
+		var longpoll = server + "/"  + sessionId + "?rid=" + new Date().getTime() + "&token=" + "janusrockstoken";
 		if(maxev !== undefined && maxev !== null)
 			longpoll = longpoll + "&maxev=" + maxev;
 		if(token !== null && token !== undefined)
@@ -515,7 +521,10 @@ function Janus(gatewayCallbacks) {
 	// Private method to create a session
 	function createSession(callbacks) {
 		var transaction = Janus.randomString(12);
-		var request = { "janus": "create", "transaction": transaction };
+		//seb 
+		//var request = { "janus": "create", "transaction": transaction };
+		//var request = { "janus": "create", "transaction": transaction, "apisecret":"janusrocks" };
+		var request = { "janus": "create", "transaction": transaction, "token":"janusrockstoken" };
 		if(token !== null && token !== undefined)
 			request["token"] = token;
 		if(apisecret !== null && apisecret !== undefined)
@@ -762,7 +771,10 @@ function Janus(gatewayCallbacks) {
 		}
 		var opaqueId = callbacks.opaqueId;
 		var transaction = Janus.randomString(12);
-		var request = { "janus": "attach", "plugin": plugin, "opaque_id": opaqueId, "transaction": transaction };
+		//seb
+		//var request = { "janus": "attach", "plugin": plugin, "opaque_id": opaqueId, "transaction": transaction };
+		//var request = { "janus": "attach", "apisecret":"janusrocks","plugin": plugin, "opaque_id": opaqueId, "transaction": transaction };
+		var request = { "janus": "attach", "token":"janusrockstoken","plugin": plugin, "opaque_id": opaqueId, "transaction": transaction };
 		if(token !== null && token !== undefined)
 			request["token"] = token;
 		if(apisecret !== null && apisecret !== undefined)
@@ -955,7 +967,9 @@ function Janus(gatewayCallbacks) {
 		var message = callbacks.message;
 		var jsep = callbacks.jsep;
 		var transaction = Janus.randomString(12);
-		var request = { "janus": "message", "body": message, "transaction": transaction };
+		//seb
+		//		var request = { "janus": "message", "body": message, "transaction": transaction };
+		var request = { "janus": "message", "body": message, "transaction": transaction ,"token":"janusrockstoken"};
 		if(token !== null && token !== undefined)
 			request["token"] = token;
 		if(apisecret !== null && apisecret !== undefined)
@@ -1053,7 +1067,9 @@ function Janus(gatewayCallbacks) {
 			Janus.warn("Is the gateway down? (connected=false)");
 			return;
 		}
-		var request = { "janus": "trickle", "candidate": candidate, "transaction": Janus.randomString(12) };
+		//seb
+		//var request = { "janus": "trickle", "candidate": candidate, "transaction": Janus.randomString(12) };
+		var request = { "janus": "trickle", "candidate": candidate, "transaction": Janus.randomString(12),"token":"janusrockstoken" };
 		if(token !== null && token !== undefined)
 			request["token"] = token;
 		if(apisecret !== null && apisecret !== undefined)
@@ -1075,6 +1091,8 @@ function Janus(gatewayCallbacks) {
 			cache: false,
 			contentType: "application/json",
 			data: JSON.stringify(request),
+			//seb
+
 			success: function(json) {
 				Janus.vdebug("Candidate sent!");
 				Janus.vdebug(json);
@@ -1088,6 +1106,7 @@ function Janus(gatewayCallbacks) {
 			},
 			dataType: "json"
 		});
+					console.log(request);
 	}
 
 	// Private method to send a data channel message
