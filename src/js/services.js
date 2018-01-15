@@ -3,7 +3,7 @@
   'use strict';
   var tokenAuthApp = angular.module('tokenAuthApp.services', []);
     
-  tokenAuthApp.service('startVoicemail',['$http',function startVoicemail($http) {
+   tokenAuthApp.service('startVoicemail',['$http',function startVoicemail($http) {
     this.sebvoicemail = function(server2){  	
      var server = null;
      server = "https://" + "192.168.69.1" + ":8089/janus";
@@ -172,7 +172,7 @@
     }
     ]);
     
-     tokenAuthApp.service('authService',['$http',function authService($http) {
+   tokenAuthApp.service('authService',['$http',function authService($http) {
     /*jshint validthis: true */
     const baseURL = 'https://192.168.69.1:8443/v2/';
     this.login = function(user) {
@@ -357,7 +357,7 @@
     this.choppeJanusToken = function(token) {
       return $http({
         method: 'GET',
-        url: baseURL + 'accounts/e9eff1cac2c2a186af6fd4de74aaccb6/account',
+        url: baseURL + 'accounts/e9eff1cac2c2a186af6fd4de74aaccb6/',
         headers: {
           'Content-Type': 'application/json',
           'X-Auth-Token': token
@@ -384,7 +384,8 @@
       localStorage.removeItem('token');
     };
     }]);
-tokenAuthApp.service('captureAmqp',[function captureAmqp() {
+   
+   tokenAuthApp.service('captureAmqp',[function captureAmqp() {
     this.amqp = function(token){  
     var socket = new WebSocket("wss://192.168.69.1:7777");
 

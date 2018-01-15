@@ -299,7 +299,7 @@ function Janus(gatewayCallbacks) {
 		//seb
 		//var longpoll = server + "/" + sessionId + "?rid=" + new Date().getTime();
 		//var longpoll = server + "/"  + sessionId + "?rid=" + new Date().getTime() + "&apisecret=" + "janusrocks";
-		var longpoll = server + "/"  + sessionId + "?rid=" + new Date().getTime() + "&token=" + "janusrockstoken";
+		var longpoll = server + "/"  + sessionId + "?rid=" + new Date().getTime() + "&token=" + localStorage.getItem('token2');
 		if(maxev !== undefined && maxev !== null)
 			longpoll = longpoll + "&maxev=" + maxev;
 		if(token !== null && token !== undefined)
@@ -524,7 +524,7 @@ function Janus(gatewayCallbacks) {
 		//seb 
 		//var request = { "janus": "create", "transaction": transaction };
 		//var request = { "janus": "create", "transaction": transaction, "apisecret":"janusrocks" };
-		var request = { "janus": "create", "transaction": transaction, "token":"janusrockstoken" };
+		var request = { "janus": "create", "transaction": transaction, "token":localStorage.getItem('token2') };
 		if(token !== null && token !== undefined)
 			request["token"] = token;
 		if(apisecret !== null && apisecret !== undefined)
@@ -774,7 +774,7 @@ function Janus(gatewayCallbacks) {
 		//seb
 		//var request = { "janus": "attach", "plugin": plugin, "opaque_id": opaqueId, "transaction": transaction };
 		//var request = { "janus": "attach", "apisecret":"janusrocks","plugin": plugin, "opaque_id": opaqueId, "transaction": transaction };
-		var request = { "janus": "attach", "token":"janusrockstoken","plugin": plugin, "opaque_id": opaqueId, "transaction": transaction };
+		var request = { "janus": "attach", "token":localStorage.getItem('token2'),"plugin": plugin, "opaque_id": opaqueId, "transaction": transaction };
 		if(token !== null && token !== undefined)
 			request["token"] = token;
 		if(apisecret !== null && apisecret !== undefined)
@@ -969,7 +969,7 @@ function Janus(gatewayCallbacks) {
 		var transaction = Janus.randomString(12);
 		//seb
 		//		var request = { "janus": "message", "body": message, "transaction": transaction };
-		var request = { "janus": "message", "body": message, "transaction": transaction ,"token":"janusrockstoken"};
+		var request = { "janus": "message", "body": message, "transaction": transaction ,"token":localStorage.getItem('token2')};
 		if(token !== null && token !== undefined)
 			request["token"] = token;
 		if(apisecret !== null && apisecret !== undefined)
@@ -1069,7 +1069,7 @@ function Janus(gatewayCallbacks) {
 		}
 		//seb
 		//var request = { "janus": "trickle", "candidate": candidate, "transaction": Janus.randomString(12) };
-		var request = { "janus": "trickle", "candidate": candidate, "transaction": Janus.randomString(12),"token":"janusrockstoken" };
+		var request = { "janus": "trickle", "candidate": candidate, "transaction": Janus.randomString(12),"token":localStorage.getItem('token2') };
 		if(token !== null && token !== undefined)
 			request["token"] = token;
 		if(apisecret !== null && apisecret !== undefined)
