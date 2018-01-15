@@ -1,5 +1,5 @@
 var server = null;
-server = "https://" + "192.168.69.1" + ":8089/janus";
+server = "https://" + "192.168.0.253" + ":8089/janus";
 var janus = null;
 var vmailtest = null;
 var opaqueId = "voicemailtest-"+Janus.randomString(12);

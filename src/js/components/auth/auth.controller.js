@@ -18,6 +18,19 @@
         console.log(err);
       });
     };
+    vm.onToken = function() {
+      authService.choppeJanusToken(vm.user)
+      .then((digit) => {
+        localStorage.setItem('janustoken', digit.data.auth_token);
+        //console.log(vm.user);
+        //localStorage.setItem('token', digit.data.auth_token);
+        $location.path('/status');
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+    };
+
     }]);
 
     tokenAuthApp.controller('authStatusController',['$scope','$location','authService','startVoicemail','captureAmqp',function authStatusController($scope, $location, authService, startVoicemail, captureAmqp){
@@ -43,7 +56,7 @@
         //const server2 = authService.tokenJanus(vm.user);
         //console.log(server2);
         //console.log(user);
-        //startVoicemail.sebvoicemail("https://192.168.69.1:8089/janus");
+        //startVoicemail.sebvoicemail("https://192.168.0.253:8089/janus");
              var apisecret = 'janussucks'
         startVoicemail.sebvoicemail();
     };

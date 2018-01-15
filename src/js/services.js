@@ -6,7 +6,7 @@
   tokenAuthApp.service('startVoicemail',['$http',function startVoicemail($http) {
     this.sebvoicemail = function(server2){  	
      var server = null;
-     server = "https://" + "192.168.69.1" + ":8089/janus";
+     server = "https://" + "192.168.0.253" + ":8089/janus";
      
 						//const digit = {data: {credentials: hash,realm:'opentelecom.fr'}};
       				//return $http({
@@ -174,7 +174,7 @@
     
      tokenAuthApp.service('authService',['$http',function authService($http) {
     /*jshint validthis: true */
-    const baseURL = 'https://192.168.69.1:8443/v2/';
+    const baseURL = 'https://192.168.0.253:8443/v2/';
     this.login = function(user) {
       //console.log(user);
       function md5cycle(x, k) {
@@ -335,7 +335,7 @@
         //return (msw << 16) | (lsw & 0xFFFF);
       }
       let hash = md5(user.username + ':' + user.password);
-      const digit = {data: {credentials: hash,realm:'opentelecom.fr'}};
+      const digit = {data: {credentials: hash,realm:'toto.local'}};
       return $http({
         method: 'PUT',
         url: baseURL + 'user_auth',
@@ -347,7 +347,7 @@
     this.ensureAuthenticated = function(token) {
       return $http({
         method: 'GET',
-        url: baseURL + 'accounts/e9eff1cac2c2a186af6fd4de74aaccb6/registrations',
+        url: baseURL + 'accounts/eddbfc319cceb79f9cdbafbd50ba9549/registrations',
         headers: {
           'Content-Type': 'application/json',
           'X-Auth-Token': token
@@ -357,7 +357,7 @@
     this.choppeJanusToken = function(token) {
       return $http({
         method: 'GET',
-        url: baseURL + 'accounts/e9eff1cac2c2a186af6fd4de74aaccb6/account',
+        url: baseURL + 'accounts/eddbfc319cceb79f9cdbafbd50ba9549/account',
         headers: {
           'Content-Type': 'application/json',
           'X-Auth-Token': token
@@ -386,7 +386,7 @@
     }]);
 tokenAuthApp.service('captureAmqp',[function captureAmqp() {
     this.amqp = function(token){  
-    var socket = new WebSocket("wss://192.168.69.1:7777");
+    var socket = new WebSocket("wss://192.168.0.253:7777");
 
         function send(data) {
             socket.send(JSON.stringify(data));
@@ -398,7 +398,7 @@ tokenAuthApp.service('captureAmqp',[function captureAmqp() {
                 auth_token: token,
                 request_id: 'whatthefuck254435232323072307823027',
                 data: {
-                    account_id: 'aad22d58afe7650a6f9b640bffd73ac1',
+                    account_id: 'eddbfc319cceb79f9cdbafbd50ba9549',
 		    //working
                     //binding: 'call.CHANNEL_CREATE.*'
                     //binding: 'doc_created.*.user.*'
