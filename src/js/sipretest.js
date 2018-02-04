@@ -1,195 +1,82 @@
-(function() {
+// We make use of this 'server' variable to provide the address of the
+// REST Janus API. By default, in this example we assume that Janus is
+// co-located with the web server hosting the HTML pages but listening
+// on a different port (8088, the default for HTTP in Janus), which is
+// why we make use of the 'window.location.hostname' base address. Since
+// Janus can also do HTTPS, and considering we don't really want to make
+// use of HTTP for Janus if your demos are served on HTTPS, we also rely
+// on the 'window.location.protocol' prefix to build the variable, in
+// particular to also change the port used to contact Janus (8088 for
+// HTTP and 8089 for HTTPS, if enabled).
+// In case you place Janus behind an Apache frontend (as we did on the
+// online demos at http://janus.conf.meetecho.com) you can just use a
+// relative path for the variable, e.g.:
+//
+// 		var server = "/janus";
+//
+// which will take care of this on its own.
+//
+//
+// If you want to use the WebSockets frontend to Janus, instead, you'll
+// have to pass a different kind of address, e.g.:
+//
+// 		var server = "ws://" + window.location.hostname + ":8188";
+//
+// Of course this assumes that support for WebSockets has been built in
+// when compiling the gateway. WebSockets support has not been tested
+// as much as the REST API, so handle with care!
+//
+//
+// If you have multiple options available, and want to let the library
+// autodetect the best way to contact your gateway (or pool of gateways),
+// you can also pass an array of servers, e.g., to provide alternative
+// means of access (e.g., try WebSockets first and, if that fails, fall
+// back to plain HTTP) or just have failover servers:
+//
+//		var server = [
+//			"ws://" + window.location.hostname + ":8188",
+//			"/janus"
+//		];
+//
+// This will tell the library to try connecting to each of the servers
+// in the presented order. The first working server will be used for
+// the whole session.
+//
+var server = null;
+if(window.location.protocol === 'http:')
+	server = "http://" + window.location.hostname + ":8088/janus";
+else
+	server = "https://" + window.location.hostname + ":8089/janus";
 
-  'use strict';
-  var tokenAuthApp = angular.module('tokenAuthApp.services', []);
-    
-   tokenAuthApp.service('startVoicemail',['$http',function startVoicemail($http) {
-    this.sebvoicemail = function(server2){  	
-     var server = null;
-     server = "https://" + "192.168.69.1" + ":8089/janus";
-     
-						//const digit = {data: {credentials: hash,realm:'opentelecom.fr'}};
-      				//return $http({
-        				//method: 'POST',
-        				//url: server 
-        				//data: digit,
-        				//headers: {'apisecret': 'janusrocks'}
-      				//});
-      
-     var janus = null;
-     var vmailtest = null;
-     var opaqueId = "voicemailtest-"+Janus.randomString(12);
-     var started = false;
-     var spinner = null;
-     var myusername = null;
-     var myid = null;
-     var audioenabled = false;
-     var apisecret = 'janussucks'
-   	
+var janus = null;
+var sipcall = null;
+var opaqueId = "sipretest-"+Janus.randomString(12);
+
+var started = false;
+var spinner = null;
+
+var selectedApproach = null;
+var registered = false;
+
+var incoming = null;
+
+
+$(document).ready(function() {
+	// Initialize the library (all console debuggers enabled)
+	Janus.init({debug: "all", callback: function() {
+		// Use a button to start the demo
+		$('#start').click(function() {
+			if(started)
+				return;
+			started = true;
+			$(this).attr('disabled', true).unbind('click');
+			// Make sure the browser supports WebRTC
+			if(!Janus.isWebrtcSupported()) {
+				bootbox.alert("No WebRTC support... ");
+				return;
+			}
 			// Create session
 			janus = new Janus(
-				{
-						
-					server: server,
-					success: function() {
-						// Attach to Voice Mail test plugin
-						janus.attach(
-							{
-								plugin: "janus.plugin.voicemail",
-								opaqueId: opaqueId,
-								success: function(pluginHandle) {
-									$('#details').remove();
-									vmailtest = pluginHandle;
-									Janus.log("Plugin attached! (" + vmailtest.getPlugin() + ", id=" + vmailtest.getId() + ")");
-									$('#voicemail').removeClass('hide').show();
-									$('#start').removeAttr('disabled').html("Stop")
-										.click(function() {
-											$(this).attr('disabled', true);
-											janus.destroy();
-										});
-									$('#record').removeAttr('disabled').html("Record")
-										.click(function() {
-											$(this).attr('disabled', true);
-											startRecording();
-										});
-								},
-								error: function(error) {
-									Janus.error("  -- Error attaching plugin...", error);
-									bootbox.alert("Error attaching plugin... " + error);
-								},
-								consentDialog: function(on) {
-									Janus.debug("Consent dialog should be " + (on ? "on" : "off") + " now");
-									if(on) {
-										// Darken screen and show hint
-										$.blockUI({ 
-											message: '<div><img src="up_arrow.png"/></div>',
-											css: {
-												border: 'none',
-												padding: '15px',
-												backgroundColor: 'transparent',
-												color: '#aaa',
-												top: '10px',
-												left: (navigator.mozGetUserMedia ? '-100px' : '300px')
-											} });
-									} else {
-										// Restore screen
-										$.unblockUI();
-									}
-								},
-								onmessage: function(msg, jsep) {
-									Janus.debug(" ::: Got a message :::");
-									Janus.debug(JSON.stringify(msg));
-									var event = msg["voicemail"];
-									Janus.debug("Event: " + event);
-									if(event != undefined && event != null) {
-										if(event === "event") {
-											if(msg["status"] !== undefined && msg["status"] !== null) {
-												var status = msg["status"];
-												if(status === 'starting') {
-													$('#record')
-														.removeClass("btn-danger").addClass("btn-default")
-														.text("Starting, please wait...");
-												} else if(status === 'started') {
-													$('#record')
-														.removeClass("btn-default").addClass("btn-info")
-														.text("Started");
-												} else if(status === 'done') {
-													$('#record')
-														.removeClass("btn-info").addClass("btn-success")
-														.text("Done!");
-													$('#download').attr('href', msg["recording"]);
-													$('#listen').click(function() {
-														$('#rec').remove();
-														$('#done').parent().append(
-															'<audio id="rec" style="width:100%;height:100%;" autoplay controls preload="auto">' +
-																'<source id="opusrec" src="' + msg["recording"] + '" type="audio/ogg""></source>' +
-																'Your browser doesn\'t support the playout of Opus files' +
-															'</audio>'
-														);
-														$('#opusrec').attr('type', 'audio/ogg; codecs="opus"');
-														if($('#opusrec').get(0).error) {
-															bootbox.alert("Couldn't play the Opus recording (" + $('#opusrec').get(0).error + "), try downloading it instead");
-														}
-														return false;
-													});
-													$('#done').removeClass('hide').show();
-													vmailtest.hangup();
-												}
-											} else if(msg["error"] !== undefined && msg["error"] !== null) {
-												bootbox.alert(msg["error"], function() {
-													window.location.reload();
-												});
-											}
-										}
-									}
-									if(jsep !== undefined && jsep !== null) {
-										Janus.debug("Handling SDP as well...");
-										Janus.debug(jsep);
-										vmailtest.handleRemoteJsep({jsep: jsep});
-									}
-								},
-								onlocalstream: function(stream) {
-									// We're not going to attach the local audio stream
-								},
-								onremotestream: function(stream) {
-									// We're not going to receive anything from the plugin
-								},
-								oncleanup: function() {
-									Janus.log(" ::: Got a cleanup notification :::");
-								}
-							});
-					},
-					error: function(error) {
-						Janus.error(error);
-						bootbox.alert(error, function() {
-							window.location.reload();
-						});
-					},
-					destroyed: function() {
-						window.location.reload();
-					}
-				});
-		
-      
-     function startRecording() {
-	   // Negotiate WebRTC now
-	   vmailtest.createOffer(
-		{
-			media: { audioRecv: false, video: false},	// We're going to only send, and not receive, audio
-			success: function(jsep) {
-				Janus.debug("Got SDP!");
-				Janus.debug(jsep);
-				var publish = { "request": "record" };
-				vmailtest.send({"message": publish, "jsep": jsep});
-			},
-			error: function(error) {
-				Janus.error("WebRTC error:", error);
-				bootbox.alert("WebRTC error... " + JSON.stringify(error));
-			}
-		});
-     }
-     };
-    }
-    ]);
-    
-    
-     tokenAuthApp.service('startSipgateway',['$http',function startVoicemail($http) {
-    this.sipgateway = function(server3){  	
-     var server = null;
-     server = "https://" + "192.168.69.1" + ":8089/janus";
-     
-     var janus = null;
-     var vmailtest = null;
-     var opaqueId = "sipgateway-"+Janus.randomString(12);
-     var started = false;
-     var spinner = null;
-     var selectedApproach = null;
-     var registered = false;
-     var incoming = null;
-
-         
-     
-     janus = new Janus(
 				{
 					server: server,
 					success: function() {
@@ -536,240 +423,228 @@
 						window.location.reload();
 					}
 				});
-						
-		
-                }
-     }
-        ]);
-    
-    
-    
-   tokenAuthApp.service('authService',['$http',function authService($http) {
-    /*jshint validthis: true */
-    const baseURL = 'https://mail.opentelecom.fr:8443/v2/';
-    this.login = function(user) {
-      //console.log(user);
-      function md5cycle(x, k) {
-        var a = x[0], b = x[1], c = x[2], d = x[3];
+		});
+	}});
+});
+	
+function checkEnter(field, event) {
+	var theCode = event.keyCode ? event.keyCode : event.which ? event.which : event.charCode;
+	if(theCode == 13) {
+		if(field.id == 'server' || field.id == 'username' || field.id == 'password' || field.id == 'displayname')
+			registerUsername();
+		else if(field.id == 'peer')
+			doCall();
+		return false;
+	} else {
+		return true;
+	}
+}
 
-        a = ff(a, b, c, d, k[0], 7, -680876936);
-        d = ff(d, a, b, c, k[1], 12, -389564586);
-        c = ff(c, d, a, b, k[2], 17,  606105819);
-        b = ff(b, c, d, a, k[3], 22, -1044525330);
-        a = ff(a, b, c, d, k[4], 7, -176418897);
-        d = ff(d, a, b, c, k[5], 12,  1200080426);
-        c = ff(c, d, a, b, k[6], 17, -1473231341);
-        b = ff(b, c, d, a, k[7], 22, -45705983);
-        a = ff(a, b, c, d, k[8], 7,  1770035416);
-        d = ff(d, a, b, c, k[9], 12, -1958414417);
-        c = ff(c, d, a, b, k[10], 17, -42063);
-        b = ff(b, c, d, a, k[11], 22, -1990404162);
-        a = ff(a, b, c, d, k[12], 7,  1804603682);
-        d = ff(d, a, b, c, k[13], 12, -40341101);
-        c = ff(c, d, a, b, k[14], 17, -1502002290);
-        b = ff(b, c, d, a, k[15], 22,  1236535329);
+function registerUsername() {
+	if(selectedApproach === null || selectedApproach === undefined) {
+		bootbox.alert("Please select a registration approach from the dropdown menu");
+		return;
+	}
+	// Try a registration
+	$('#server').attr('disabled', true);
+	$('#username').attr('disabled', true);
+	$('#authuser').attr('disabled', true);
+	$('#displayname').attr('disabled', true);
+	$('#password').attr('disabled', true);
+	$('#register').attr('disabled', true).unbind('click');
+	$('#registerset').attr('disabled', true);
+	// Let's see if the user provided a server address
+	// 		NOTE WELL! Even though the attribute we set in the request is called "proxy",
+	//		this is actually the _registrar_. If you want to set an outbound proxy (for this
+	//		REGISTER request and for all INVITEs that will follow), you'll need to set the
+	//		"outbound_proxy" property in the request instead. The two are of course not
+	//		mutually exclusive. If you set neither, the domain part of the user identity
+	//		will be used as the target of the REGISTER request the plugin might send.
+	var sipserver = $('#server').val();
+	if(sipserver !== "" && sipserver.indexOf("sip:") != 0 && sipserver.indexOf("sips:") !=0) {
+		bootbox.alert("Please insert a valid SIP server (e.g., sip:192.168.0.1:5060)");
+		$('#server').removeAttr('disabled');
+		$('#username').removeAttr('disabled');
+		$('#authuser').removeAttr('disabled');
+		$('#displayname').removeAttr('disabled');
+		$('#password').removeAttr('disabled');
+		$('#register').removeAttr('disabled').click(registerUsername);
+		$('#registerset').removeAttr('disabled');
+		return;
+	}
+	if(selectedApproach === "guest") {
+		// We're registering as guests, no username/secret provided
+		var register = {
+			"request" : "register",
+			"type" : "guest"
+		};
+		if(sipserver !== "")
+			register["proxy"] = sipserver;
+		var username = $('#username').val();
+		if(!username === "" || username.indexOf("sip:") != 0 || username.indexOf("@") < 0) {
+			bootbox.alert("Please insert a valid SIP address (e.g., sip:goofy@example.com): this doesn't need to exist for guests, but is required");
+			$('#server').removeAttr('disabled');
+			$('#username').removeAttr('disabled');
+			$('#authuser').removeAttr('disabled');
+			$('#displayname').removeAttr('disabled');
+			$('#register').removeAttr('disabled').click(registerUsername);
+			$('#registerset').removeAttr('disabled');
+			return;
+		}
+		register.username = username;
+		var displayname = $('#displayname').val();
+		if(displayname) {
+			register.display_name = displayname;
+		}
+		if(sipserver === "") {
+			bootbox.confirm("You didn't specify a SIP Registrar to use: this will cause the plugin to try and conduct a standard (<a href='https://tools.ietf.org/html/rfc3263' target='_blank'>RFC3263</a>) lookup. If this is not what you want or you don't know what this means, hit Cancel and provide a SIP Registrar instead'",
+				function(result) {
+					if(result) {
+						sipcall.send({"message": register});
+					} else {
+						$('#server').removeAttr('disabled');
+						$('#username').removeAttr('disabled');
+						$('#authuser').removeAttr('disabled');
+						$('#displayname').removeAttr('disabled');
+						$('#register').removeAttr('disabled').click(registerUsername);
+						$('#registerset').removeAttr('disabled');
+					}
+				}); 
+		} else {
+			sipcall.send({"message": register});
+		}
+		return;
+	}
+	var username = $('#username').val();
+	if(username === "" || username.indexOf("sip:") != 0 || username.indexOf("@") < 0) {
+		bootbox.alert('Please insert a valid SIP identity address (e.g., sip:goofy@example.com)');
+		$('#server').removeAttr('disabled');
+		$('#username').removeAttr('disabled');
+		$('#authuser').removeAttr('disabled');
+		$('#displayname').removeAttr('disabled');
+		$('#password').removeAttr('disabled');
+		$('#register').removeAttr('disabled').click(registerUsername);
+		$('#registerset').removeAttr('disabled');
+		return;
+	}
+	var password = $('#password').val();
+	if(password === "") {
+		bootbox.alert("Insert the username secret (e.g., mypassword)");
+		$('#server').removeAttr('disabled');
+		$('#username').removeAttr('disabled');
+		$('#authuser').removeAttr('disabled');
+		$('#displayname').removeAttr('disabled');
+		$('#password').removeAttr('disabled');
+		$('#register').removeAttr('disabled').click(registerUsername);
+		$('#registerset').removeAttr('disabled');
+		return;
+	}
+	var register = {
+		"request" : "register",
+		"username" : username
+	};
+	// By default, the SIPre plugin tries to extract the username part from the SIP
+	// identity to register; if the username is different, you can provide it here
+	var authuser = $('#authuser').val();
+	if(authuser !== "") {
+		register.authuser = authuser;
+	}
+	// The display name is only needed when you want a friendly name to appear when you call someone
+	var displayname = $('#displayname').val();
+	if(displayname !== "") {
+		register.display_name = displayname;
+	}
+	// Use the plain secret
+	register["secret"] = password;
+	if(sipserver === "") {
+		bootbox.confirm("You didn't specify a SIP Registrar to use: this will cause the plugin to try and conduct a standard (<a href='https://tools.ietf.org/html/rfc3263' target='_blank'>RFC3263</a>) lookup. If this is not what you want or you don't know what this means, hit Cancel and provide a SIP Registrar instead'",
+			function(result) {
+				if(result) {
+					sipcall.send({"message": register});
+				} else {
+					$('#server').removeAttr('disabled');
+					$('#username').removeAttr('disabled');
+					$('#authuser').removeAttr('disabled');
+					$('#displayname').removeAttr('disabled');
+					$('#password').removeAttr('disabled');
+					$('#register').removeAttr('disabled').click(registerUsername);
+					$('#registerset').removeAttr('disabled');
+				}
+			}); 
+	} else {
+		register["proxy"] = sipserver;
+		// Uncomment this if you want to see an outbound proxy too
+		register["outbound_proxy"] = "sip:192.168.1.80:5080";
+		sipcall.send({"message": register});
+	}
+}
 
-        a = gg(a, b, c, d, k[1], 5, -165796510);
-        d = gg(d, a, b, c, k[6], 9, -1069501632);
-        c = gg(c, d, a, b, k[11], 14,  643717713);
-        b = gg(b, c, d, a, k[0], 20, -373897302);
-        a = gg(a, b, c, d, k[5], 5, -701558691);
-        d = gg(d, a, b, c, k[10], 9,  38016083);
-        c = gg(c, d, a, b, k[15], 14, -660478335);
-        b = gg(b, c, d, a, k[4], 20, -405537848);
-        a = gg(a, b, c, d, k[9], 5,  568446438);
-        d = gg(d, a, b, c, k[14], 9, -1019803690);
-        c = gg(c, d, a, b, k[3], 14, -187363961);
-        b = gg(b, c, d, a, k[8], 20,  1163531501);
-        a = gg(a, b, c, d, k[13], 5, -1444681467);
-        d = gg(d, a, b, c, k[2], 9, -51403784);
-        c = gg(c, d, a, b, k[7], 14,  1735328473);
-        b = gg(b, c, d, a, k[12], 20, -1926607734);
+function doCall() {
+	// Call someone
+	$('#peer').attr('disabled', true);
+	$('#call').attr('disabled', true).unbind('click');
+	$('#dovideo').attr('disabled', true);
+	var username = $('#peer').val();
+	if(username === "") {
+		bootbox.alert('Please insert a valid SIP address (e.g., sip:pluto@example.com)');
+		$('#peer').removeAttr('disabled');
+		$('#dovideo').removeAttr('disabled');
+		$('#call').removeAttr('disabled').click(doCall);
+		return;
+	}
+	if(username.indexOf("sip:") != 0 || username.indexOf("@") < 0) {
+		bootbox.alert('Please insert a valid SIP address (e.g., sip:pluto@example.com)');
+		$('#peer').removeAttr('disabled').val("");
+		$('#dovideo').removeAttr('disabled').val("");
+		$('#call').removeAttr('disabled').click(doCall);
+		return;
+	}
+	// Call this URI
+	doVideo = $('#dovideo').is(':checked');
+	Janus.log("This is a SIP " + (doVideo ? "video" : "audio") + " call (dovideo=" + doVideo + ")"); 
+	sipcall.createOffer(
+		{
+			media: {
+				audioSend: true, audioRecv: true,		// We DO want audio
+				videoSend: doVideo, videoRecv: doVideo	// We MAY want video
+			},
+			success: function(jsep) {
+				Janus.debug("Got SDP!");
+				Janus.debug(jsep);
+				// By default, you only pass the SIP URI to call as an
+				// argument to a "call" request. Should you want the
+				// SIP stack to add some custom headers to the INVITE,
+				// you can do so by adding an additional "headers" object,
+				// containing each of the headers as key-value, e.g.:
+				//		var body = { request: "call", uri: $('#peer').val(),
+				//			headers: {
+				//				"My-Header": "value",
+				//				"AnotherHeader": "another string"
+				//			}
+				//		};
+				var body = { request: "call", uri: $('#peer').val() };
+				// Note: you can also ask the plugin to negotiate SDES-SRTP, instead of the
+				// default plain RTP, by adding a "srtp" attribute to the request. Valid
+				// values are "sdes_optional" and "sdes_mandatory", e.g.:
+				//		var body = { request: "call", uri: $('#peer').val(), srtp: "sdes_optional" };
+				// "sdes_optional" will negotiate RTP/AVP and add a crypto line,
+				// "sdes_mandatory" will set the protocol to RTP/SAVP instead.
+				// Just beware that some endpoints will NOT accept an INVITE
+				// with a crypto line in it if the protocol is not RTP/SAVP,
+				// so if you want SDES use "sdes_optional" with care.
+				sipcall.send({"message": body, "jsep": jsep});
+			},
+			error: function(error) {
+				Janus.error("WebRTC error...", error);
+				bootbox.alert("WebRTC error... " + JSON.stringify(error));
+			}
+		});
+}
 
-        a = hh(a, b, c, d, k[5], 4, -378558);
-        d = hh(d, a, b, c, k[8], 11, -2022574463);
-        c = hh(c, d, a, b, k[11], 16,  1839030562);
-        b = hh(b, c, d, a, k[14], 23, -35309556);
-        a = hh(a, b, c, d, k[1], 4, -1530992060);
-        d = hh(d, a, b, c, k[4], 11,  1272893353);
-        c = hh(c, d, a, b, k[7], 16, -155497632);
-        b = hh(b, c, d, a, k[10], 23, -1094730640);
-        a = hh(a, b, c, d, k[13], 4,  681279174);
-        d = hh(d, a, b, c, k[0], 11, -358537222);
-        c = hh(c, d, a, b, k[3], 16, -722521979);
-        b = hh(b, c, d, a, k[6], 23,  76029189);
-        a = hh(a, b, c, d, k[9], 4, -640364487);
-        d = hh(d, a, b, c, k[12], 11, -421815835);
-        c = hh(c, d, a, b, k[15], 16,  530742520);
-        b = hh(b, c, d, a, k[2], 23, -995338651);
-
-        a = ii(a, b, c, d, k[0], 6, -198630844);
-        d = ii(d, a, b, c, k[7], 10,  1126891415);
-        c = ii(c, d, a, b, k[14], 15, -1416354905);
-        b = ii(b, c, d, a, k[5], 21, -57434055);
-        a = ii(a, b, c, d, k[12], 6,  1700485571);
-        d = ii(d, a, b, c, k[3], 10, -1894986606);
-        c = ii(c, d, a, b, k[10], 15, -1051523);
-        b = ii(b, c, d, a, k[1], 21, -2054922799);
-        a = ii(a, b, c, d, k[8], 6,  1873313359);
-        d = ii(d, a, b, c, k[15], 10, -30611744);
-        c = ii(c, d, a, b, k[6], 15, -1560198380);
-        b = ii(b, c, d, a, k[13], 21,  1309151649);
-        a = ii(a, b, c, d, k[4], 6, -145523070);
-        d = ii(d, a, b, c, k[11], 10, -1120210379);
-        c = ii(c, d, a, b, k[2], 15,  718787259);
-        b = ii(b, c, d, a, k[9], 21, -343485551);
-
-        x[0] = add32(a, x[0]);
-        x[1] = add32(b, x[1]);
-        x[2] = add32(c, x[2]);
-        x[3] = add32(d, x[3]);
-
-      }
-
-      function cmn(q, a, b, x, s, t) {
-        a = add32(add32(a, q), add32(x, t));
-        return add32((a << s) | (a >>> (32 - s)), b);
-      }
-
-      function ff(a, b, c, d, x, s, t) {
-        return cmn((b & c) | ((~b) & d), a, b, x, s, t);
-      }
-
-      function gg(a, b, c, d, x, s, t) {
-        return cmn((b & d) | (c & (~d)), a, b, x, s, t);
-      }
-
-      function hh(a, b, c, d, x, s, t) {
-        return cmn(b ^ c ^ d, a, b, x, s, t);
-      }
-
-      function ii(a, b, c, d, x, s, t) {
-        return cmn(c ^ (b | (~d)), a, b, x, s, t);
-      }
-
-      function md51(s) {
-        var txt = '';
-        var n = s.length,
-        state = [1732584193, -271733879, -1732584194, 271733878], i;
-        for (i = 64; i <= s.length; i += 64) {
-          md5cycle(state, md5blk(s.substring(i - 64, i)));
-        }
-        s = s.substring(i - 64);
-        var tail = [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0];
-        for (i = 0; i < s.length; i++)
-        tail[i >> 2] |= s.charCodeAt(i) << ((i % 4) << 3);
-        tail[i >> 2] |= 0x80 << ((i % 4) << 3);
-        if (i > 55) {
-          md5cycle(state, tail);
-          for (i = 0; i < 16; i++) tail[i] = 0;
-        }
-        tail[14] = n * 8;
-        md5cycle(state, tail);
-        return state;
-      }
-
-      function md5blk(s) { /* I figured global was faster.   */
-        var md5blks = [], i; /* Andy King said do it this way. */
-        for (i = 0; i < 64; i += 4) {
-          md5blks[i >> 2] = s.charCodeAt(i) + (s.charCodeAt(i + 1) << 8) + (s.charCodeAt(i + 2) << 16) + (s.charCodeAt(i + 3) << 24);}
-        return md5blks;
-      }
-
-      var hex_chr = '0123456789abcdef'.split('');
-
-      function rhex(n) {
-        var s = '', j = 0;
-        for (; j < 4; j++)
-          s += hex_chr[(n >> (j * 8 + 4)) & 0x0F] + hex_chr[(n >> (j * 8)) & 0x0F];
-        return s;
-      }
-
-      function hex(x) {
-        for (var i = 0; i < x.length; i++)
-          x[i] = rhex(x[i]);
-        return x.join('');
-      }
-
-      function md5(s) {
-        return hex(md51(s));
-      }
-
-      function add32(a, b) {
-        return (a + b) & 0xFFFFFFFF;
-      }
-
-      if (md5('hello') !== '5d41402abc4b2a76b9719d911017c592') {
-        var hello = 'hello';
-        //function add32(x, y) {
-        //var lsw = (x & 0xFFFF) + (y & 0xFFFF),
-        //msw = (x >> 16) + (y >> 16) + (lsw >> 16);
-        //return (msw << 16) | (lsw & 0xFFFF);
-      }
-      let hash = md5(user.username + ':' + user.password);
-      const digit = {data: {credentials: hash,realm:'opentelecom.fr'}};
-      return $http({
-        method: 'PUT',
-        url: baseURL + 'user_auth',
-        data: digit,
-        headers: {'Content-Type': 'application/json'}
-      });
-    };
-    
-    this.ensureAuthenticated = function(token) {
-      return $http({
-        method: 'GET',
-        url: baseURL + 'accounts/aad22d58afe7650a6f9b640bffd73ac1/registrations',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Auth-Token': token
-        }
-      });
-    };
-    this.choppeJanusToken = function(token) {
-      return $http({
-        method: 'GET',
-        url: baseURL + 'accounts/aad22d58afe7650a6f9b640bffd73ac1/',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Auth-Token': token
-        }
-      });
-    };
-
-    this.logoff = function() {
-      localStorage.removeItem('token');
-    };
-    }]);
-   
-   tokenAuthApp.service('captureAmqp',[function captureAmqp() {
-    this.amqp = function(token){  
-    var socket = new WebSocket("wss://192.168.69.1:7777");
-
-        function send(data) {
-            socket.send(JSON.stringify(data));
-        }
-
-        socket.onopen = function() {
-            send({
-                action: 'subscribe',
-                auth_token: token,
-                request_id: 'whatthefuck254435232323072307823027',
-                data: {
-                    account_id: 'aad22d58afe7650a6f9b640bffd73ac1',
-		    //working
-                    //binding: 'call.CHANNEL_CREATE.*'
-                    //binding: 'doc_created.*.user.*'
-                    binding: 'from-janus'
-                    //binding: 'authz.*'
-                }
-            });
-    	  socket.onmessage = function(raw_message) {
-            var json_data = JSON.parse(raw_message.data);
-
-            console.log(json_data);
-        };
-       } 
-       }
-    	   }]);  
-})();
+function doHangup() {
+	// Hangup a call
+	$('#call').attr('disabled', true).unbind('click');
+	var hangup = { "request": "hangup" };
+	sipcall.send({"message": hangup});
+	sipcall.hangup();
+}

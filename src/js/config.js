@@ -50,8 +50,23 @@
           ensureAuthenticated: true,
           loginRedirect: false
         }
-      })
-      .otherwise({
+      }).when('/voicemail', {
+        templateUrl: 'js/components/auth/auth.voicemail.view.html',
+        controller: 'authStatusController',
+        controllerAs: 'authStatusCtrl',
+        restrictions: {
+          ensureAuthenticated: true,
+          loginRedirect: false
+        }
+      }).when('/sipgateway', {
+        templateUrl: 'js/components/auth/auth.sipgateway.view.html',
+        controller: 'authStatusController',
+        controllerAs: 'authStatusCtrl',
+        restrictions: {
+          ensureAuthenticated: true,
+          loginRedirect: false
+        }
+      }).otherwise({
         redirectTo: '/'
       });
   }

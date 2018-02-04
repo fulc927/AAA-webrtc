@@ -41,12 +41,14 @@
         $location.path('/login');
     };
     
+       vm.onVoicemail = function() {
+        $location.path('/voicemail');
+    };
     
-    
-    
-
-  
-    vm.onStart = function() {
+           vm.onSipgateway = function() {
+        $location.path('/sipgateway');
+    };
+         vm.onStartVoicemail = function() {
     authService.choppeJanusToken(token)
     .then((digit2) => {
         console.log(digit2);
@@ -59,20 +61,7 @@
       });
     };
     
-    
-    
-    
-    
-    
-    //vm.onStart = function() {
-        ////const server2 = authService.tokenJanus(vm.user);
-        ///console.log(server2);
-        ////console.log(user);
-        ///startVoicemail.sebvoicemail("https://192.168.69.1:8089/janus");
-    //         //var apisecret = 'janussucks'
-    //    startVoicemail.sebvoicemail();
-    //};
-    vm.onEvent = function() {
+       vm.onEvent = function() {
         captureAmqp.amqp(token);
     };
    }]);
